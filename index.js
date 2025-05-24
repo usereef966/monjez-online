@@ -2,15 +2,17 @@ require('dotenv').config();
 const express = require('express');
 const mysql = require('mysql2/promise');
 const cors = require('cors');
-app.use(cors({
-  origin: '*'
-}));
+
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
 let db;
+
+app.use(cors({
+  origin: '*'
+}));
 
 // Middleware للتحقق من التوكن
 const verifyToken = (req, res, next) => {

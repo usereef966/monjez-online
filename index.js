@@ -32,11 +32,14 @@ module.exports.verifyToken = verifyToken;
 
 // دالة إنشاء طلب ديناميكي
 async function createOrder(fields) {
-  const cols = Object.keys(fields);
+  // استبعاد حقل status
+  const cols = Object.keys(fields).filter(col => col !== 'status');
   const placeholders = cols.map(() => '?').join(', ');
-  const values = Object.values(fields);
+  const values = cols.map(col => fields[col]);
+  
   const sql = `INSERT INTO orders (${cols.join(', ')}) VALUES (${placeholders})`;
   const [result] = await db.query(sql, values);
+  
   return result.insertId;
 }
 
@@ -1283,13 +1286,13 @@ app.get('/api/my-orders', verifyToken, async (req, res) => {
     let featuresMap = {};
     let platformsMap = {};
 
-    if (ids.length) {
-      const [webFeatures] = await db.query(
-        `SELECT of.order_id, ef.name AS feature
-         FROM order_features of
-         JOIN extra_features ef ON of.feature_id = ef.id
-         WHERE of.order_id IN (?)`, [ids]
-      );
+if (ids.length) {
+  const [webFeatures] = await db.query(
+    `SELECT ofe.order_id, ef.name AS feature
+     FROM order_features ofe
+     JOIN extra_features ef ON ofe.feature_id = ef.id
+     WHERE ofe.order_id IN (?)`, [ids]
+  );
 
       webFeatures.forEach(r => {
         featuresMap[r.order_id] ||= [];
@@ -1543,12 +1546,13 @@ let featuresMap = {};
 if (orderIds.length) {
 
   // جلب الميزات العامة (الأقسام الحالية ويب، SEO، موبايل، ...)
-  const [orderFeatures] = await db.query(`
-    SELECT of.order_id, ef.name AS feature
-    FROM order_features of
-    JOIN extra_features ef ON of.feature_id = ef.id
-    WHERE of.order_id IN (?)
-  `, [orderIds]);
+const [orderFeatures] = await db.query(`
+  SELECT ofe.order_id, ef.name AS feature
+  FROM order_features ofe
+  JOIN extra_features ef ON ofe.feature_id = ef.id
+  WHERE ofe.order_id IN (?)
+`, [orderIds]);
+
 
  orderFeatures.forEach(f => {
   if (!featuresMap[f.order_id]) featuresMap[f.order_id] = [];
